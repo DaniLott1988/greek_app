@@ -86,70 +86,69 @@ tab1, tab2 = st.tabs(["Word Anki", "Useful Phrases"])
 
 # Word Anki Tab
 with tab1:
-    st.header("Greek Vocabulary Flashcards")
-    
+    # Center content on desktop using columns
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
+        st.markdown("<h2 style='text-align: center; margin: 0;'>Greek Vocabulary Flashcards</h2>", unsafe_allow_html=True)
+        
         # Display current word
         current_word = GREEK_WORDS[st.session_state.current_word_index]
         
-        # Card container
+        # Card container - centered and mobile-friendly with theme adaptation
         with st.container():
-            st.markdown("""
-            <div style='text-align: center; padding: 20px; border: 2px solid #ddd; border-radius: 10px; margin: 20px 0;'>
-            """, unsafe_allow_html=True)
-            
-            st.markdown(f"<h2 style='color: #1f4e79;'>{current_word['greek']}</h2>", unsafe_allow_html=True)
-            st.markdown(f"<p style='font-style: italic; color: #666;'>/{current_word['pronunciation']}/</p>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center;'><h2>{current_word['greek']}</h2></div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align: center;'><em>/{current_word['pronunciation']}/</em></div>", unsafe_allow_html=True)
             
             if st.session_state.show_answer:
-                st.markdown(f"<h3 style='color: #2d5a2d;'>{current_word['english']}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: center;'><h3>{current_word['english']}</h3></div>", unsafe_allow_html=True)
             
-            st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("---")
         
-        # Control buttons
-        col_a, col_b, col_c = st.columns(3)
+        # Control buttons - full width for mobile
+        if st.button("Show Answer" if not st.session_state.show_answer else "Hide Answer", 
+                     use_container_width=True, type="primary"):
+            st.session_state.show_answer = not st.session_state.show_answer
+            st.rerun()
         
-        with col_a:
-            if st.button("Show Answer" if not st.session_state.show_answer else "Hide Answer"):
-                st.session_state.show_answer = not st.session_state.show_answer
-                st.rerun()
-        
-        with col_b:
-            if st.button("✅ Correct"):
-                if st.session_state.show_answer:
+        # Rating buttons - only show when answer is visible
+        if st.session_state.show_answer:
+            col_correct, col_incorrect = st.columns(2)
+            
+            with col_correct:
+                if st.button("✅ Correct", use_container_width=True, type="secondary"):
                     st.session_state.score['correct'] += 1
                     st.session_state.score['total'] += 1
                     st.session_state.current_word_index = (st.session_state.current_word_index + 1) % len(GREEK_WORDS)
                     st.session_state.show_answer = False
                     st.rerun()
-        
-        with col_c:
-            if st.button("❌ Incorrect"):
-                if st.session_state.show_answer:
+            
+            with col_incorrect:
+                if st.button("❌ Incorrect", use_container_width=True):
                     st.session_state.score['total'] += 1
                     st.session_state.current_word_index = (st.session_state.current_word_index + 1) % len(GREEK_WORDS)
                     st.session_state.show_answer = False
                     st.rerun()
         
-        # Navigation
+        st.divider()
+        
+        # Navigation buttons
         col_prev, col_shuffle, col_next = st.columns(3)
         
         with col_prev:
-            if st.button("⬅️ Previous"):
+            if st.button("⬅️ Previous", use_container_width=True):
                 st.session_state.current_word_index = (st.session_state.current_word_index - 1) % len(GREEK_WORDS)
                 st.session_state.show_answer = False
                 st.rerun()
         
         with col_shuffle:
-            if st.button("Shuffle"):
+            if st.button("Shuffle", use_container_width=True):
                 st.session_state.current_word_index = random.randint(0, len(GREEK_WORDS) - 1)
                 st.session_state.show_answer = False
                 st.rerun()
         
         with col_next:
-            if st.button("➡️ Next"):
+            if st.button("➡️ Next", use_container_width=True):
                 st.session_state.current_word_index = (st.session_state.current_word_index + 1) % len(GREEK_WORDS)
                 st.session_state.show_answer = False
                 st.rerun()
@@ -161,56 +160,51 @@ with tab1:
         
         if st.session_state.score['total'] > 0:
             accuracy = (st.session_state.score['correct'] / st.session_state.score['total']) * 100
-            st.metric("Accuracy", f"{accuracy:.1f}%", f"{st.session_state.score['correct']}/{st.session_state.score['total']}")
-        
-        # Reset score button
-        if st.button("Reset Score"):
-            st.session_state.score = {'correct': 0, 'total': 0}
-            st.rerun()
+            col_acc, col_reset = st.columns([2, 1])
+            with col_acc:
+                st.metric("Accuracy", f"{accuracy:.1f}%", f"{st.session_state.score['correct']}/{st.session_state.score['total']}")
+            with col_reset:
+                if st.button("🔄 Reset", use_container_width=True):
+                    st.session_state.score = {'correct': 0, 'total': 0}
+                    st.rerun()
 
 # Useful Phrases Tab
 with tab2:
-    st.header("Useful Greek Phrases")
+    # Center content on desktop using columns
+    col1, col2, col3 = st.columns([1, 2, 1])
     
-    # Category selector
-    categories = [phrase_group["category"] for phrase_group in USEFUL_PHRASES]
-    selected_category = st.selectbox("Choose a category:", categories)
-    
-    # Find the selected category data
-    selected_phrases = next(group["phrases"] for group in USEFUL_PHRASES if group["category"] == selected_category)
-    
-    # Display phrases
-    for i, phrase in enumerate(selected_phrases):
-        with st.container():
-            st.markdown("""
-            <div style='padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin: 10px 0; background-color: #f9f9f9;'>
-            """, unsafe_allow_html=True)
-            
-            col1, col2 = st.columns([2, 1])
-            
-            with col1:
+    with col2:
+        st.markdown("<h2 style='text-align: center; margin: 0;'>Useful Greek Phrases</h2>", unsafe_allow_html=True)
+        
+        # Category selector
+        categories = [phrase_group["category"] for phrase_group in USEFUL_PHRASES]
+        selected_category = st.selectbox("Choose a category:", categories)
+        
+        # Find the selected category data
+        selected_phrases = next(group["phrases"] for group in USEFUL_PHRASES if group["category"] == selected_category)
+        
+        # Display phrases - mobile-friendly cards with theme adaptation
+        for i, phrase in enumerate(selected_phrases):
+            with st.container():
                 st.markdown(f"**Greek:** {phrase['greek']}")
                 st.markdown(f"**English:** {phrase['english']}")
                 st.markdown(f"**Pronunciation:** /{phrase['pronunciation']}/")
+                
+                st.divider()
+        
+        # Study tips
+        st.markdown("<h3 style='text-align: center; margin: 0;'>Study Tips</h3>", unsafe_allow_html=True)
+        with st.expander("Click to see study tips"):
+            tips = [
+                "Practice pronunciation by reading the phonetic transcriptions out loud",
+                "Try to use these phrases in real conversations",
+                "Focus on one category at a time to avoid overwhelming yourself",
+                "Greek has different forms for masculine and feminine - pay attention to context",
+                "The Greek alphabet has 24 letters - consider learning it to read Greek text better"
+            ]
             
-            with col2:
-                if st.button(f"🔊 Listen", key=f"listen_{selected_category}_{i}"):
-                    st.info("Audio feature coming soon!")
-            
-            st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Study tips
-    st.subheader("Study Tips")
-    tips = [
-        "Practice pronunciation by reading the phonetic transcriptions out loud",
-        "Try to use these phrases in real conversations",
-        "Focus on one category at a time to avoid overwhelming yourself",
-        "Greek has different forms for masculine and feminine - pay attention to context",
-        "The Greek alphabet has 24 letters - consider learning it to read Greek text better"
-    ]
-    
-    for tip in tips:
-        st.markdown(f"• {tip}")
+            for tip in tips:
+                st.markdown(f"• {tip}")
 
 # Sidebar with additional information
 with st.sidebar:
